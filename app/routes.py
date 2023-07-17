@@ -25,6 +25,10 @@ def get_users():
         existing_user = UserInfo.query.filter_by(userUID=user_uid).first()
         if existing_user:
             return jsonify({'error': 'User with the same userUID already exists'})
+        
+        existing_user = UserInfo.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'error': 'User with the same username already exists'})
 
         new_user = UserInfo(
             userUID=user_uid,
@@ -40,3 +44,10 @@ def get_users():
         except Exception as e:
             return jsonify({'error': str(e)})
 
+@app.route('/users/<user_uid>', methods=['GET'])
+def get_user_info_by_uid(user_uid):
+    user = UserInfo.query.filter_by(userUID=user_uid).first()
+    if user:
+        return jsonify(UserInfo.serialize(user))
+    else:
+        return jsonify({'error': 'User not found'})
