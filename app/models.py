@@ -1,7 +1,6 @@
 from app import db
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import enum
 
 class UserInfo(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
@@ -37,10 +36,6 @@ class Project(db.Model):
             'tasks': [task.serialize() for task in self.tasks]
         }
     
-class TaskStatus(enum.Enum):
-    pending = 1
-    completed = 2
-    
 class Task(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     date_added = db.Column('date_added', db.Date, default=datetime.utcnow)
@@ -48,12 +43,14 @@ class Task(db.Model):
     description = db.Column('description', db.Text)
     project_id = db.Column('project_id', db.Integer, db.ForeignKey('project.id'))
     project = relationship("Project", back_populates="tasks")
-    status = db.Column('status', db.Enum(TaskStatus), default=TaskStatus.pending)
+    status = db.Column('status', db.Text, default='pending')
 
     def serialize(self):
         return {
             'id': self.id,
             'date_added': self.date_added,
             'title': self.title,
-            'description': self.description
+            'description': self.description,
+            'status': self.status,
+            'project_id': self.project_id
         }

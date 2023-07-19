@@ -100,8 +100,55 @@ def get_project_by_id(project_id):
         
 @app.route('/projects/<project_id>/tasks', methods=['POST'])
 def add_task_to_project(project_id):
-    pass
+    if request.method == 'POST':
+        data = request.get_json()
+        project = Project.query.filter_by(id=project_id).first()
+        if project:
+            task_title = data.get('title')
+            task_description = data.get('description')
+
+            new_task = Task(
+                title=task_title,
+                description=task_description,
+                project_id=project_id
+            )
+
+            try:
+                db.session.add(new_task)
+                db.session.commit()
+                return jsonify({'message': 'New task created successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        else:
+            return jsonify({'error': 'Project not found'})
+
 
 @app.route('/projects/<project_id>/tasks', methods=['GET'])
 def get_all_tasks_for_project(project_id):
-    pass
+    if request.method == 'GET':
+        task_list = []
+        tasks = Task.query.filter_by(project_id=project_id).all()
+        for task in tasks:
+            task_list.append(Task.serialize(task))
+        return jsonify(task_list)
+    
+@app.route('/task/<task_id>/complete', methods=['POST'])
+def mark_task_as_completed(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    if(task.status == 'completed'):
+        return jsonify({'error': 'Task already completed'})
+    else:
+        task.status = 'completed'
+        db.session.commit()
+        return jsonify({'message': 'Task marked as completed'})
+
+
+@app.route('/task/<task_id>/pending', methods=['POST'])
+def mark_task_as_pending(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    if(task.status == 'pending'):
+        return jsonify({'error': 'Task already pending'})
+    else:
+        task.status = 'pending'
+        db.session.commit()
+        return jsonify({'message': 'Task marked as pending'})
