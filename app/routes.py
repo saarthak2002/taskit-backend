@@ -152,3 +152,30 @@ def mark_task_as_pending(task_id):
         task.status = 'pending'
         db.session.commit()
         return jsonify({'message': 'Task marked as pending'})
+    
+@app.route('/task/<task_id>/delete', methods=['POST'])
+def delete_task(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    if task:
+        try:
+            db.session.delete(task)
+            db.session.commit()
+            return jsonify({'message': 'Task deleted successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)})
+    else:
+        return jsonify({'error': 'Task not found'})
+
+@app.route('/task/<task_id>/edit', methods=['POST'])
+def update_task(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    if task:
+        data = request.get_json()
+        title = data.get('title')
+        description = data.get('description')
+        task.title = title
+        task.description = description
+        db.session.commit()
+        return jsonify({'message': 'Task updated successfully'})
+    else:
+        return jsonify({'error': 'Task not found'})
