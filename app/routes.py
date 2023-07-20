@@ -214,4 +214,22 @@ def get_and_create_task_categories(project_id):
 
 @app.route('/taskcategories/<category_id>/delete', methods=['POST'])
 def delete_task_category(category_id):
-    pass
+    task_category = TaskCategory.query.filter_by(id=category_id).first()
+    project = Project.query.filter_by(id=task_category.project_id).first()
+    if task_category:
+        if project:
+            for task in project.tasks:
+                if task.task_category_name == task_category.name:
+                    task.task_category_name = 'None'
+                    task.task_category_color = '#bab5b5'
+            try:
+                db.session.delete(task_category)
+                db.session.commit()
+                return jsonify({'message': 'Task category deleted successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        else:
+            return jsonify({'error': 'Project not found'})
+    else:
+        return jsonify({'error': 'Task category not found'})
+    
