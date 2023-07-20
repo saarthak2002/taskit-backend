@@ -48,6 +48,7 @@ class Task(db.Model):
     status = db.Column('status', db.Text, default='pending')
     task_category_name = db.Column('task_category_name', db.Text, default='None')
     task_category_color = db.Column('task_category_color', db.Text, default='#bab5b5')
+    completed_at_time = db.Column('completed_at_time', db.Text, default=None)
 
     def serialize(self):
         return {
@@ -58,7 +59,8 @@ class Task(db.Model):
             'status': self.status,
             'project_id': self.project_id,
             'task_category_name': self.task_category_name,
-            'task_category_color': self.task_category_color
+            'task_category_color': self.task_category_color,
+            'completed_at_time': self.completed_at_time
         }
     
 class TaskCategory(db.Model):

@@ -1,6 +1,8 @@
 from app import app, db
 from flask import jsonify, request
 from app.models import UserInfo, Project, Task, TaskCategory
+from datetime import datetime
+from datetime import timedelta
 
 @app.route('/', methods=['GET'])
 def index():
@@ -143,6 +145,7 @@ def mark_task_as_completed(task_id):
         return jsonify({'error': 'Task already completed'})
     else:
         task.status = 'completed'
+        task.completed_at_time = datetime.now().isoformat()
         db.session.commit()
         return jsonify({'message': 'Task marked as completed'})
 
@@ -154,6 +157,7 @@ def mark_task_as_pending(task_id):
         return jsonify({'error': 'Task already pending'})
     else:
         task.status = 'pending'
+        task.completed_at_time = None
         db.session.commit()
         return jsonify({'message': 'Task marked as pending'})
     
@@ -232,4 +236,40 @@ def delete_task_category(category_id):
             return jsonify({'error': 'Project not found'})
     else:
         return jsonify({'error': 'Task category not found'})
+
+@app.route('/stats/tasks/weekly/<user_uid>', methods=['GET'])
+def get_weekly_task_stats(user_uid):
+    if request.method == 'GET':
+        task_counts = {}
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=6)
+
+        current_date = start_date
+        while current_date <= end_date:
+            task_counts[current_date.date()] = 0
+            current_date += timedelta(days=1)
+
+        projects = Project.query.filter_by(userUID=user_uid).all()
+        for project in projects:
+            for task in project.tasks:
+                if task.completed_at_time and start_date <= datetime.fromisoformat(task.completed_at_time) <= end_date:
+                    completion_date = datetime.fromisoformat(task.completed_at_time).date()
+                    if completion_date not in task_counts:
+                        task_counts[completion_date] = 1
+                    else:
+                        task_counts[completion_date] += 1
+        response_data = [{'date': str(date), 'completed_tasks': count} for date, count in task_counts.items()]
+        return jsonify(response_data)
+    
+@app.route('/stats/basic/<user_uid>', methods=['GET'])
+def get_basic_stats(user_uid):
+    projects = Project.query.filter_by(userUID=user_uid).all()
+    total_tasks = 0
+    completed_tasks = 0
+    for project in projects:
+        for task in project.tasks:
+            total_tasks += 1
+            if task.status == 'completed':
+                completed_tasks += 1
+    return jsonify({'total_tasks': total_tasks, 'completed_tasks': completed_tasks, 'total_projects': len(projects)})
     
