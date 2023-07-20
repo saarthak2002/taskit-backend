@@ -1,6 +1,6 @@
 from app import app, db
 from flask import jsonify, request
-from app.models import UserInfo, Project, Task
+from app.models import UserInfo, Project, Task, TaskCategory
 
 @app.route('/', methods=['GET'])
 def index():
@@ -106,11 +106,15 @@ def add_task_to_project(project_id):
         if project:
             task_title = data.get('title')
             task_description = data.get('description')
+            task_category_name = data.get('task_category_name')
+            task_category_color = data.get('task_category_color')
 
             new_task = Task(
                 title=task_title,
                 description=task_description,
-                project_id=project_id
+                project_id=project_id,
+                task_category_name=task_category_name,
+                task_category_color=task_category_color
             )
 
             try:
@@ -173,9 +177,41 @@ def update_task(task_id):
         data = request.get_json()
         title = data.get('title')
         description = data.get('description')
+        task_category_name = data.get('task_category_name')
+        task_category_color = data.get('task_category_color')
         task.title = title
         task.description = description
+        task.task_category_name = task_category_name
+        task.task_category_color = task_category_color
         db.session.commit()
         return jsonify({'message': 'Task updated successfully'})
     else:
         return jsonify({'error': 'Task not found'})
+    
+@app.route('/taskcategories/project/<project_id>', methods=['GET', 'POST'])
+def get_and_create_task_categories(project_id):
+    if request.method == 'GET':
+        task_categories = []
+        categories = TaskCategory.query.filter_by(project_id=project_id).all()
+        for category in categories:
+            task_categories.append(TaskCategory.serialize(category))
+        return jsonify(task_categories)
+    elif request.method == 'POST':
+        data = request.get_json()
+        name = data.get('name')
+        color = data.get('color')
+        new_category = TaskCategory(
+            name=name,
+            color=color,
+            project_id=project_id
+        )
+        try:
+            db.session.add(new_category)
+            db.session.commit()
+            return jsonify({'message': 'New category created successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+@app.route('/taskcategories/<category_id>/delete', methods=['POST'])
+def delete_task_category(category_id):
+    pass
