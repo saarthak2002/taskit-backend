@@ -3,6 +3,7 @@ from flask import jsonify, request
 from app.models import UserInfo, Project, Task, TaskCategory
 from datetime import datetime
 from datetime import timedelta
+from sqlalchemy import desc
 
 @app.route('/', methods=['GET'])
 def index():
@@ -272,4 +273,18 @@ def get_basic_stats(user_uid):
             if task.status == 'completed':
                 completed_tasks += 1
     return jsonify({'total_tasks': total_tasks, 'completed_tasks': completed_tasks, 'total_projects': len(projects)})
+
+@app.route('/stats/projects/tasks/<user_uid>', methods=['GET'])
+def get_recent_projects_bar_graph(user_uid):
+    recent_projects = Project.query.filter_by(userUID=user_uid).order_by(desc(Project.date_added)).limit(5).all()
+    response_data = []
+    for project in recent_projects:
+        completed_tasks = 0
+        total_tasks = len(project.tasks)
+        for task in project.tasks:
+            if task.status == 'completed':
+                completed_tasks += 1
+        response_data.append({'title': project.title, 'completed_tasks': completed_tasks, 'total_tasks': total_tasks})  
+    return jsonify(response_data)
+
     
