@@ -134,7 +134,7 @@ def add_task_to_project(project_id):
 def get_all_tasks_for_project(project_id):
     if request.method == 'GET':
         task_list = []
-        tasks = Task.query.filter_by(project_id=project_id).all()
+        tasks = Task.query.filter_by(project_id=project_id).order_by(desc(Task.date_added)).all()
         for task in tasks:
             task_list.append(Task.serialize(task))
         return jsonify(task_list)
@@ -286,5 +286,13 @@ def get_recent_projects_bar_graph(user_uid):
                 completed_tasks += 1
         response_data.append({'title': project.title, 'completed_tasks': completed_tasks, 'total_tasks': total_tasks})  
     return jsonify(response_data)
+
+@app.route('/users/exist/<username>', methods=['GET'])
+def does_username_exist(username):
+    user = UserInfo.query.filter_by(username=username).first()
+    if user:
+        return jsonify({'exists': True})
+    else:
+        return jsonify({'exists': False})
 
     
