@@ -1,9 +1,10 @@
 from app import app, db
 from flask import jsonify, request
-from app.models import UserInfo, Project, Task, TaskCategory
+from app.models import UserInfo, Project, Task, TaskCategory, Collaborator
 from datetime import datetime
 from datetime import timedelta
 from sqlalchemy import desc
+from sqlalchemy.sql import func
 
 @app.route('/', methods=['GET'])
 def index():
@@ -54,6 +55,12 @@ def get_user_info_by_uid(user_uid):
         return jsonify(UserInfo.serialize(user))
     else:
         return jsonify({'error': 'User not found'})
+    
+@app.route('/users/search/<search>', methods=['GET'])
+def search_by_username(search):
+    search_term = f"%{search}%"
+    results = UserInfo.query.filter(func.lower(UserInfo.username).like(func.lower(search_term))).all()
+    return jsonify([UserInfo.serialize(user) for user in results])
     
 @app.route('/projects', methods=['GET', 'POST'])
 def get_and_create_project():
@@ -294,5 +301,54 @@ def does_username_exist(username):
         return jsonify({'exists': True})
     else:
         return jsonify({'exists': False})
+    
+@app.route('/collab/project/<project_id>', methods=['GET', 'POST'])
+def add_or_get_collab_to_project(project_id):
+    if request.method == 'GET':
+        project = Project.query.filter_by(id=project_id).first()
+        if project:
+            collabs = Collaborator.query.filter_by(project_id=project_id).all()
+            return jsonify([Collaborator.serialize(collab) for collab in collabs])
+        else:
+            return jsonify({'error': 'Project not found'})
+    elif request.method == 'POST':
+        data = request.get_json()
+        project = Project.query.filter_by(id=project_id).first()
+        if project:
+            if Collaborator.query.filter_by(project_id=project_id, userUID=data.get('userUID')).first():
+                return jsonify({'error': 'Collaborator already exists'})
+            new_collab = Collaborator(
+                project_id=project_id,
+                userUID=data.get('userUID'),
+            )
+            try:
+                db.session.add(new_collab)
+                db.session.commit()
+                return jsonify({'message': 'New collaborator added successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        else:
+            return jsonify({'error': 'Project not found'})
+
+@app.route('/collabs/projects/<user_uid>', methods=['GET'])
+def get_collab_projects_for_user(user_uid):
+    projects = []
+    collabs = Collaborator.query.filter_by(userUID=user_uid).all()
+    for collab in collabs:
+        project = Project.query.filter_by(id=collab.project_id).first()
+        if project:
+            projects.append(Project.serialize(project))
+    return jsonify(projects)
+
+@app.route('/collabs/verify/<project_id>', methods=['POST'])
+def check_if_user_is_a_collaborator(project_id):
+    data = request.get_json()
+    user_uid = data.get('userUID')
+    collab = Collaborator.query.filter_by(project_id=project_id, userUID=user_uid).first()
+    if collab:
+        return jsonify({'is_collab': True})
+    else:
+        return jsonify({'is_collab': False})
+    
 
     

@@ -1,6 +1,8 @@
 from app import db
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from sqlalchemy.sql import func
+from sqlalchemy_utils.types.ts_vector import TSVectorType
 
 class UserInfo(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
@@ -8,6 +10,15 @@ class UserInfo(db.Model):
     username = db.Column('username', db.Text, unique=True)
     firstName = db.Column('firstName', db.Text)
     lastname = db.Column('lastName', db.Text)
+
+    username_tsv = db.Column(
+        TSVectorType("username", regconfig="english"),
+        db.Computed("to_tsvector('english', \"username\")", persisted=True)
+    )
+
+    __table_args__ = (
+        db.Index("idx_userinfo_username_tsv", username_tsv, postgresql_using="gin"),
+    )
 
     def serialize(self):
         return {
@@ -76,4 +87,17 @@ class TaskCategory(db.Model):
             'name': self.name,
             'color': self.color,
             'project_id': self.project_id
+        }
+  
+class Collaborator(db.Model):
+    id = db.Column('id', db.Integer, primary_key=True)
+    project_id = db.Column('project_id', db.Integer, db.ForeignKey('project.id'))
+    project = relationship("Project")
+    userUID = db.Column('userUID', db.Text)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'userUID': self.userUID
         }
