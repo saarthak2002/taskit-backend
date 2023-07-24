@@ -359,6 +359,4 @@ def check_if_user_is_a_collaborator(project_id):
         return jsonify({'is_collab': True})
     else:
         return jsonify({'is_collab': False})
-    
-
-    
+   
