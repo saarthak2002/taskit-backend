@@ -118,13 +118,20 @@ def add_task_to_project(project_id):
             task_description = data.get('description')
             task_category_name = data.get('task_category_name')
             task_category_color = data.get('task_category_color')
+            task_created_by_uid = data.get('created_by_user_uid')
+            print(task_created_by_uid)
+            userInfo = None
+            if task_created_by_uid:
+                print('here')
+                userInfo = UserInfo.query.filter_by(userUID=task_created_by_uid).first()
 
             new_task = Task(
                 title=task_title,
                 description=task_description,
                 project_id=project_id,
                 task_category_name=task_category_name,
-                task_category_color=task_category_color
+                task_category_color=task_category_color,
+                created_by=userInfo.firstName + ' ' + userInfo.lastname if userInfo else None
             )
 
             try:
@@ -148,12 +155,14 @@ def get_all_tasks_for_project(project_id):
     
 @app.route('/task/<task_id>/complete', methods=['POST'])
 def mark_task_as_completed(task_id):
+    data = request.get_json()
     task = Task.query.filter_by(id=task_id).first()
     if(task.status == 'completed'):
         return jsonify({'error': 'Task already completed'})
     else:
         task.status = 'completed'
         task.completed_at_time = datetime.now().isoformat()
+        task.completed_by = data.get('completed_by')
         db.session.commit()
         return jsonify({'message': 'Task marked as completed'})
 
@@ -166,6 +175,7 @@ def mark_task_as_pending(task_id):
     else:
         task.status = 'pending'
         task.completed_at_time = None
+        task.completed_by = None
         db.session.commit()
         return jsonify({'message': 'Task marked as pending'})
     
