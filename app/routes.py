@@ -393,4 +393,18 @@ def check_if_user_is_a_collaborator(project_id):
         return jsonify({'is_collab': True})
     else:
         return jsonify({'is_collab': False})
-   
+    
+@app.route('/collabs/getcollabsbyuid/<user_uid>', methods=['GET'])
+def get_users_who_collaborate_with_user(user_uid):
+    collabs_user_uids = []
+    projects = Project.query.filter_by(userUID=user_uid).all()
+    for project in projects:
+        project_collabs = Collaborator.query.filter_by(project_id=project.id).all()
+        for collab in project_collabs:
+            collabs_user_uids.append(collab.userUID)
+    return_user_info = []
+    for collab_user_uid in set(collabs_user_uids):
+        user = UserInfo.query.filter_by(userUID=collab_user_uid).first()
+        if user:
+            return_user_info.append(UserInfo.serialize(user))
+    return jsonify(return_user_info)
