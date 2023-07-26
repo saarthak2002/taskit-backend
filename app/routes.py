@@ -312,7 +312,7 @@ def does_username_exist(username):
     else:
         return jsonify({'exists': False})
     
-@app.route('/collab/project/<project_id>', methods=['GET', 'POST'])
+@app.route('/collab/project/<project_id>', methods=['GET', 'POST', 'DELETE'])
 def add_or_get_collab_to_project(project_id):
     if request.method == 'GET':
         project = Project.query.filter_by(id=project_id).first()
@@ -337,6 +337,22 @@ def add_or_get_collab_to_project(project_id):
                 return jsonify({'message': 'New collaborator added successfully'})
             except Exception as e:
                 return jsonify({'error': str(e)})
+        else:
+            return jsonify({'error': 'Project not found'})
+    elif request.method == 'DELETE':
+        data = request.get_json()
+        project = Project.query.filter_by(id=project_id).first()
+        if project:
+            collab = Collaborator.query.filter_by(project_id=project_id, userUID=data.get('userUID')).first()
+            if collab:
+                try:
+                    db.session.delete(collab)
+                    db.session.commit()
+                    return jsonify({'message': 'Collaborator deleted successfully'})
+                except Exception as e:
+                    return jsonify({'error': str(e)})
+            else:
+                return jsonify({'error': 'Collaborator not found'})
         else:
             return jsonify({'error': 'Project not found'})
 
