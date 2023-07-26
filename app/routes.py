@@ -61,6 +61,24 @@ def search_by_username(search):
     search_term = f"%{search}%"
     results = UserInfo.query.filter(func.lower(UserInfo.username).like(func.lower(search_term))).all()
     return jsonify([UserInfo.serialize(user) for user in results])
+
+@app.route('/users/change/<user_uid>', methods=['POST'])
+def change_username(user_uid):
+    data = request.get_json()
+    user = UserInfo.query.filter_by(userUID=user_uid).first()
+    if user:
+        username = data.get('username')
+        existing_user = UserInfo.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'error': 'User with the same username already exists'})
+        user.username = username
+        try:
+            db.session.commit()
+            return jsonify({'message': 'Username changed successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)})
+    else:
+        return jsonify({'error': 'User not found'})
     
 @app.route('/projects', methods=['GET', 'POST'])
 def get_and_create_project():
