@@ -29,8 +29,8 @@ GET or POST requests to get UserInfo or create new UserInfo entry on sign-up.
 ### .../users/<user_uid>
 GET UserInfo from the unique user_id of a user provided by Firebase during login or sign-up.
 
-### .../users/search/<search>
-Search for a user's info by their username. Full-text search based on the query in the 'search' string using TS Vectors.
+### .../users/search/<search_string>
+Search for a user's info by their username. Full-text search based on the query in the search string using TS Vectors.
 
 ### .../users/change/<user_uid>
 Update the username in the UserInfo of the user with unique id user_uid.
@@ -74,7 +74,7 @@ Get the total tasks, completed tasks, and total projects for a particular user.
 ### .../stats/projects/tasks/<user_uid>
 Get the total tasks and completed tasks for each of the five most recent projects a user has created.
 
-### .../users/exist/<username>
+### .../users/exist/<user_name>
 Check if a user with a particular username already exists or not.
 
 ### .../collab/project/<project_id>
