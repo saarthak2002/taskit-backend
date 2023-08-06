@@ -92,5 +92,7 @@ GET all the other users a particular user has collaborated with.
 ## Frontend
 This REST web service serves data to a frontend web application made with React. See the frontend source code [here](https://github.com/saarthak2002/taskit-app) or visit the [deployed version](https://taskit-frontend-a7880b47804a.herokuapp.com/).
 
+The essential features of the platform can be accessed on the go using the [task.it mobile app](https://github.com/saarthak2002/taskit-mobile) built with Flutter.
+
 ## Copyright
 This application is developed by Saarthak Gupta © 2023.
